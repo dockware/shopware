@@ -2,7 +2,7 @@ commands:
 
   - name: "Restart PHP should work correctly"
     # we switch to any php version that is not default...just any in the "middle"
-    command: "cd /var/www && make switch-php version=8.4 && make restart-php && php -v"
+    command: "cd /var/www && make switch-php version=8.3 && make restart-php && php -v"
     expected: "with Zend OPcache v8."
 
   - name: "Restart PHP with XDebug ON leads to enabled XDebug"

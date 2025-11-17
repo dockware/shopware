@@ -2,7 +2,7 @@
 
 # a key value list of php versions and their folder names
 PHP_VERSIONS=(
-    "8.4:20240924"
+    # "8.4:20240924"
     "8.3:20230831"
     "8.2:20220829"
     # "8.1:20210902"
