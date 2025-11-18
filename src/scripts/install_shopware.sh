@@ -8,12 +8,7 @@ if [ -z "$SHOPWARE_VERSION" ]; then
 fi
 
 
-
-
 sudo service mysql start
-# -------------------------------------------------------------------------------------------
-# switch to default PHP before installing
-sudo update-alternatives --set php /usr/bin/php8.3 > /dev/null 2>&1
 # -------------------------------------------------------------------------------------------
 rm -rf /var/www/html
 cd /var/www && composer create-project shopware/production:"$SHOPWARE_VERSION" --no-interaction --no-cache --no-dev html

@@ -17,6 +17,7 @@ contain these changes.
 ### Fixed
 
 - Mailcatcher was not correctly configured to be used in SSMTP configurations.
+- Remove a default PHP switch to v8.3 before installing Shopware. We just stick to the default version from the PHP installation part.
 
 ## [1.2.0]
 
