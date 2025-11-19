@@ -6,6 +6,7 @@ LABEL title="Dockware image for Shopware" \
       maintainer="dasistweb GmbH"
 
 ARG VERSION
+ARG MIN_PHP
 
 ## ***********************************************************************
 ##  IMAGE VARIABLES
@@ -48,6 +49,7 @@ COPY --chmod=0755 entrypoint.sh /entrypoint.sh
 RUN echo "1:env-variables" && \
     mkdir -p /dockware && \
     echo "${VERSION}" > /dockware/version.txt && \
+    echo "${MIN_PHP}" > /dockware/min_php.txt && \
     date >/dockware/build-date.txt && \
     echo "$(date +%Y) dasistweb GmbH" > /dockware/copyright.txt && \
     mkdir -p /var/www && \
@@ -264,8 +266,9 @@ RUN echo "7:node" && \
 ## ***********************************************************************
 RUN echo "8:shopware" && \
     SW_VERSION=$(cat /dockware/version.txt) && \
+    SW_MIN_PHP=$(cat /dockware/min_php.txt) && \
     if [ "$SW_VERSION" != "none" ]; then \
-        cd /dockware/tmp/scripts && bash install_shopware.sh $SW_VERSION && \
+        cd /dockware/tmp/scripts && bash install_shopware.sh $SW_VERSION $SW_MIN_PHP && \
         tar -cf - -C /var/www/html . | zstd --ultra -22 -o /var/www/shopware.tar.zst && \
         find /var/www/html -mindepth 1 -delete && \
         # we need the zst in the html folder. if existing entrypoint.sh will decompress it \

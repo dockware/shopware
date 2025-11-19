@@ -1,14 +1,24 @@
 #!/bin/bash
 
 SHOPWARE_VERSION=$1
+SHOPWARE_MIN_PHP=$2
 
 if [ -z "$SHOPWARE_VERSION" ]; then
-    echo "Usage: $0 <shopware-version>"
+    echo "Usage: $0 <shopware-version> <min-php-version>"
+    exit 1
+fi
+
+if [ -z "$SHOPWARE_MIN_PHP" ]; then
+    echo "Usage: $0 <shopware-version> <min-php-version>"
     exit 1
 fi
 
 
 sudo service mysql start
+# -------------------------------------------------------------------------------------------
+# switch to Shopware minimum PHP version to install all correct dependencies
+# otherwise it could be, that it's installed in e.g. PHP 8.3, the user switches to 8.2 and things break
+sudo update-alternatives --set php /usr/bin/php$SHOPWARE_MIN_PHP > /dev/null 2>&1
 # -------------------------------------------------------------------------------------------
 rm -rf /var/www/html
 cd /var/www && composer create-project shopware/production:"$SHOPWARE_VERSION" --no-interaction --no-cache --no-dev html

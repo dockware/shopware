@@ -7,8 +7,10 @@
 # adjust the shopware version here!
 # this is the one, that will be installed in the shopware image
 # however, it the tag can still use "dev-main" as version for nightly builds while still this version is installed
-CURRENT_SW_VERSION:=6.6.10.16
-
+CURRENT_SW_VERSION:=6.7.4.2
+# ------------------------------
+# this is the minimum php version for Shopware, it will be installed using this version
+CURRENT_SW_VERSION_MIN_PHP:=8.2
 
 # ----------------------------------------------------------------------------------------------------------------
 # ----------------------------------------------------------------------------------------------------------------
@@ -69,7 +71,7 @@ build-shopware: ##3 Builds with the current Shopware version [tag=x.y.z|dev-main
 ifndef tag
 	$(error Please provide the argument tag=xyz to run the command)
 endif
-	@cd ./src && DOCKER_BUILDKIT=1 docker build --squash --build-arg VERSION=$(CURRENT_SW_VERSION) -t dockware/shopware:$(tag) .
+	@cd ./src && DOCKER_BUILDKIT=1 docker build --squash --build-arg VERSION=$(CURRENT_SW_VERSION) --build-arg MIN_PHP=$(CURRENT_SW_VERSION_MIN_PHP) -t dockware/shopware:$(tag) .
 
 analyze: ##3 Shows the size of the image [image=shopware|shopware-essentials, tag=x.y.z|dev-main]
 ifndef image
@@ -98,14 +100,17 @@ ifndef tag
 endif
 	php ./vendor/bin/svrunit test --configuration=./tests/svrunit/suites/$(image).xml --docker-tag=$(tag) --debug --report-junit --report-html
 
+
 cypress: ##4 Runs all Cypress tests for the Shopware image [tag=x.y.z|dev-main]
 ifndef tag
 	$(error Please provide the argument tag=xyz to run the command)
 endif
-	# if tag is dev-main then expect our current SW version in the image with the provided tag
-	SW_VERSION=$(if $(filter dev-main,$(tag)),$(CURRENT_SW_VERSION),$(tag))
+	cd ./tests/cypress && make install;
+	cd ./tests/cypress && make start-env image=shopware tag=$(tag);
 	# -------------------------------------------------------------------------
-	cd ./tests/cypress && make install
-	cd ./tests/cypress && make start-env image=shopware tag=$(tag)
-	while ! curl -k -s -o /dev/null http://localhost:1000; do echo Waiting for dockware; sleep 1; done
+ifeq ($(tag),dev-main)
+	@# if we have dev-main as tag, then always use the CURRENT_SW_VERSION for testing
 	cd ./tests/cypress && make run url=http://localhost:1000 shopware=$(CURRENT_SW_VERSION) || (make stop-env && false)
+else
+	cd ./tests/cypress && make run url=http://localhost:1000 shopware=$(tag) || (make stop-env && false)
+endif

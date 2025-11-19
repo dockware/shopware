@@ -88,6 +88,18 @@
             <directory>../tests/features/switch-php</directory>
         </testsuite>
 
+        <!-- CUSTOM SCRIPTS WITH DIFFERENT PHP VERSION
+             Shopware has to be installed using the minimum required PHP version.
+             If this doesn't happen, it can be that it's installed using PHP 8.4, but the user launches with PHP 8.2 later.
+             If then, a custom script is used at boot, it can happen that dependencies are screwed because they were installed with the wrong PHP version.
+             So let's try to start Shopware in the minimum PHP version and run a custom script.
+        -->
+        <testsuite name="Custom Scripts with minimum PHP 8.2" group="features" dockerImage="dockware/shopware:{{tag}}" dockerEnv="PHP_VERSION=8.2,SW_API_ACCESS_KEY=SWSCOVFSNKLBYUTKS1VSOEDGUQ">
+            <!-- just check if container starts up -->
+            <directory>../tests/defaults</directory>
+        </testsuite>
+
+
     </testsuites>
 
 </svrunit>

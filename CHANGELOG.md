@@ -18,6 +18,7 @@ contain these changes.
 
 - Mailcatcher was not correctly configured to be used in SSMTP configurations.
 - Remove a default PHP switch to v8.3 before installing Shopware. We just stick to the default version from the PHP installation part.
+- Fixed an issue where Shopware was always installed using PHP 8.3, causing crashes when running images with a different PHP versions (e.g. 8.2) and PHP boot scripts or ENV variables (SW_API_ACCESS_KEY, ...). Shopware is now installed using its minimum required PHP version, ensuring compatibility across all configured PHP versions.
 
 ## [1.2.0]
 
