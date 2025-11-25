@@ -44,6 +44,8 @@ describe('Shopware Administration', () => {
         cy.get('#v-0').type('shopware');
         cy.get('.mt-button').click();
 
+        cy.wait(4000);
+
         cy.contains('.sw-version__info', shopware.getVersion());
     })
 
@@ -57,7 +59,7 @@ describe('Shopware Administration', () => {
         cy.get('.sw-extension > span.sw-admin-menu__navigation-link > .sw-admin-menu__navigation-link-label').click();
         cy.get('.sw-extension-my-extensions > .sw-admin-menu__navigation-link > .sw-admin-menu__navigation-link-label').click();
 
-        cy.wait(2000);
+        cy.wait(4000);
         
         const rowDockwarePlugin = ':nth-child(2) > .sw-meteor-card__content > .sw-meteor-card__content-wrapper';
 
