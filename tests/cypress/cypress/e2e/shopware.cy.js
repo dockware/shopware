@@ -44,9 +44,7 @@ describe('Shopware Administration', () => {
         cy.get('#v-0').type('shopware');
         cy.get('.mt-button').click();
 
-        cy.wait(4000);
-
-        cy.contains('.sw-version__info', shopware.getVersion());
+        cy.contains('.sw-admin-menu__header', shopware.getVersion(), {timeout: 10000});
     })
 
     it('Dockware Sample Plugin is installed', () => {
@@ -59,12 +57,10 @@ describe('Shopware Administration', () => {
         cy.get('.sw-extension > span.sw-admin-menu__navigation-link > .sw-admin-menu__navigation-link-label').click();
         cy.get('.sw-extension-my-extensions > .sw-admin-menu__navigation-link > .sw-admin-menu__navigation-link-label').click();
 
-        cy.wait(4000);
-        
         const rowDockwarePlugin = ':nth-child(2) > .sw-meteor-card__content > .sw-meteor-card__content-wrapper';
 
-        cy.contains(rowDockwarePlugin, 'Dockware Sample Plugin');
-        cy.contains(rowDockwarePlugin, 'Installed');
+        cy.contains(rowDockwarePlugin, 'Dockware Sample Plugin', shopware.getVersion(), {timeout: 10000});
+        cy.contains(rowDockwarePlugin, 'Installed', shopware.getVersion(), {timeout: 10000});
     })
 
 })
