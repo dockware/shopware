@@ -1,8 +1,7 @@
 import Shopware from "Services/Shopware";
-import AdminActions from "Actions/AdminActions";
+
 
 const shopware = new Shopware();
-const adminAction = new AdminActions();
 
 
 beforeEach(() => {
@@ -22,7 +21,7 @@ describe('Shopware Storefront', () => {
 
         cy.visit('/');
 
-        cy.get('.nav-item-a515ae260223466f8e37471d279e6406-link > .main-navigation-link-text').click();
+        cy.get('.nav-item-a515ae260223466f8e37471d279e6406 > .main-navigation-link-text > span').click();
 
         cy.contains('Main product with properties');
     })
@@ -40,22 +39,30 @@ describe('Shopware Administration', () => {
 
     it('Verify installed Shopware Version: ' + shopware.getVersion(), () => {
 
-        adminAction.login();
+        cy.visit('/admin');
+        cy.get('#sw-field--username').type('admin');
+        cy.get('#sw-field--password').type('shopware');
+        cy.get('.sw-button__content').click();
 
         cy.contains('.sw-version__info', shopware.getVersion());
     })
 
     it('Dockware Sample Plugin is installed', () => {
 
-        adminAction.login();
+        cy.visit('/admin');
+        cy.get('#sw-field--username').type('admin');
+        cy.get('#sw-field--password').type('shopware');
+        cy.get('.sw-button__content').click();
 
         cy.get('.sw-extension > span.sw-admin-menu__navigation-link > .sw-admin-menu__navigation-link-label').click();
         cy.get('.sw-extension-my-extensions > .sw-admin-menu__navigation-link > .sw-admin-menu__navigation-link-label').click();
 
+        cy.wait(2000);
+
         const rowDockwarePlugin = ':nth-child(2) > .sw-meteor-card__content > .sw-meteor-card__content-wrapper';
 
-        cy.contains(rowDockwarePlugin, 'Dockware Sample Plugin', {timeout: 10000});
-        cy.contains(rowDockwarePlugin, 'Installed', {timeout: 10000});
+        cy.contains(rowDockwarePlugin, 'Dockware Sample Plugin');
+        cy.contains(rowDockwarePlugin, 'Installed');
     })
 
 })
