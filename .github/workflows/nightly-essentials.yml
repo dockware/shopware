@@ -20,6 +20,7 @@ jobs:
         uses: ./.github/actions/circleci
         with:
           # -------------------------------------------
+          BRANCH: main
           IMAGE: shopware-essentials
           VERSION: dev-main
           IS_LATEST: false
