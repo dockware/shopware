@@ -1,4 +1,4 @@
-<svrunit setupTime="16">
+<svrunit setupTime="60">
 
     <testsuites>
 
@@ -68,6 +68,14 @@
 
         <testsuite name="PHP 8.2, XDebug ON" group="php" dockerImage="dockware/shopware-essentials:{{tag}}" dockerEnv="PHP_VERSION=8.2,XDEBUG_ENABLED=1">
             <directory>../tests/php/php8.2</directory>
+            <directory>../tests/tools/xdebug/xdebug3</directory>
+            <directory>../tests/tools/composer/v2</directory>
+            <directory>../tests/tools/tideways/config</directory>
+            <directory>../tests/features/xdebug-on</directory>
+        </testsuite>
+
+        <testsuite name="PHP 8.5, XDebug ON" group="php" dockerImage="dockware/shopware-essentials:{{tag}}" dockerEnv="PHP_VERSION=8.5,XDEBUG_ENABLED=1">
+            <directory>../tests/php/php8.5</directory>
             <directory>../tests/tools/xdebug/xdebug3</directory>
             <directory>../tests/tools/composer/v2</directory>
             <directory>../tests/tools/tideways/config</directory>
