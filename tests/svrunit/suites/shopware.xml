@@ -80,6 +80,14 @@
             <directory>../tests/features/xdebug-on</directory>
         </testsuite>
 
+        <testsuite name="PHP 8.5, XDebug ON" group="php" dockerImage="dockware/shopware:{{tag}}" dockerEnv="PHP_VERSION=8.5,XDEBUG_ENABLED=1">
+            <directory>../tests/php/php8.5</directory>
+            <directory>../tests/tools/xdebug/xdebug3</directory>
+            <directory>../tests/tools/composer/v2</directory>
+            <directory>../tests/tools/tideways/config</directory>
+            <directory>../tests/features/xdebug-on</directory>
+        </testsuite>
+
         <testsuite name="Restart PHP" group="php" dockerImage="dockware/shopware:{{tag}}">
             <directory>../tests/features/restart-php</directory>
         </testsuite>

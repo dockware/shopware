@@ -12,6 +12,7 @@ Welcome to Dockware! For more information, visit [dockware.io](https://dockware.
     * [What is Dockware for Shopware?](#what-is-dockware-for-shopware)
     * [When to use this image?](#when-to-use-this-image)
     * [Versioning](#versioning)
+        * [Docker Tags](#docker-tags)
         * [Git Tags](#git-tags)
         * [Essentials-First](#essentials-first)
         * [LTS](#lts)
@@ -65,6 +66,27 @@ and will always be updated if relevant changes are made in the operating system 
 Shopware versions that are then built afterward will automatically contain these changes.
 
 The source code in this repository is always the **latest Shopware version**.
+
+### Docker Tags
+
+The **dockware/shopware** image is published on Docker Hub with the following tags:
+
+* `latest` — points to the most recent Shopware version overall
+* `<major>-latest` — points to the most recent version of a Shopware major release, e.g. `6.7-latest` or `6.6-latest`
+* `<version>` — a specific Shopware version, e.g. `6.7.10.0`
+
+The `<major>-latest` tags are useful if you want to stay on a specific Shopware major (e.g. for an LTS branch) without manually updating to every new patch release.
+
+```bash
+# always the latest released Shopware version
+docker run -p 80:80 dockware/shopware:latest
+
+# always the latest patch of Shopware 6.7
+docker run -p 80:80 dockware/shopware:6.7-latest
+
+# pinned to a specific Shopware version
+docker run -p 80:80 dockware/shopware:6.7.10.0
+```
 
 ### Git Tags
 

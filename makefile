@@ -65,13 +65,13 @@ build-essentials: ##3 Builds the Essentials image [version=x.y.z|dev-main]
 ifndef version
 	$(error Please provide the argument version=xyz to run the command)
 endif
-	@cd ./src && DOCKER_BUILDKIT=1 docker build --squash --build-arg VERSION=none -t dockware/shopware-essentials:$(version) .
+	@cd ./src && DOCKER_BUILDKIT=1 docker build --squash --no-cache --build-arg VERSION=none -t dockware/shopware-essentials:$(version) .
 
 build-shopware: ##3 Builds with the current Shopware version [tag=x.y.z|dev-main]
 ifndef tag
 	$(error Please provide the argument tag=xyz to run the command)
 endif
-	@cd ./src && DOCKER_BUILDKIT=1 docker build --squash --build-arg VERSION=$(CURRENT_SW_VERSION) --build-arg MIN_PHP=$(CURRENT_SW_VERSION_MIN_PHP) -t dockware/shopware:$(tag) .
+	@cd ./src && DOCKER_BUILDKIT=1 docker build --squash --no-cache --build-arg VERSION=$(CURRENT_SW_VERSION) --build-arg MIN_PHP=$(CURRENT_SW_VERSION_MIN_PHP) -t dockware/shopware:$(tag) .
 
 analyze: ##3 Shows the size of the image [image=shopware|shopware-essentials, tag=x.y.z|dev-main]
 ifndef image

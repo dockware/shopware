@@ -178,7 +178,16 @@ if [ $RECOVERY_MODE = 0 ]; then
     # start test and start apache
     echo "DOCKWARE: testing and starting Apache..."
     sudo apache2ctl configtest
-    sudo service apache2 restart
+    # Resilient apache start: an earlier `service apache2 start/restart`
+    # (e.g. from `make switch-php` during boot, or a `docker exec` racing with us)
+    # may have left workers running with a pid file that no longer matches.
+    # In that case `service apache2 restart` refuses with
+    # "processes named 'apache2' running which do not match your pid file"
+    # and `set -e` would kill the container. Force a clean state, then start.
+    sudo service apache2 stop >/dev/null 2>&1 || true
+    sudo pkill -9 apache2 >/dev/null 2>&1 || true
+    sudo rm -f /var/run/apache2/apache2.pid
+    sudo service apache2 start
     echo "-----------------------------------------------------------"
     # --------------------------------------------------
 

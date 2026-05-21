@@ -34,7 +34,7 @@ ifndef tag
 endif
 	docker rm -f shopware_cypress || true
 	docker run --rm -p 1000:80 --name shopware_cypress -d dockware/$(image):$(tag)
-	sleep 20
+	until [ "$$(docker inspect -f '{{.State.Health.Status}}' shopware_cypress)" = "healthy" ]; do sleep 1; done
 	docker exec shopware_cypress bash -c "mysql -h 127.0.0.1 -u root -proot shopware -e \"UPDATE sales_channel_domain SET url = CONCAT(url, ':1000') WHERE url LIKE 'http://localhost%';\""
 
 stop-env: ##2 Stops the environment
