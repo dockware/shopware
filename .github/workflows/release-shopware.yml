@@ -1,5 +1,5 @@
 name: Release Shopware
-run-name: dockware/shopware:${{ github.event.inputs.version }}, latest ${{ github.event.inputs.setLatest }}
+run-name: dockware/shopware:${{ github.event.inputs.version }}, latest ${{ github.event.inputs.setLatest }}, major-latest ${{ github.event.inputs.setMajorLatest }}
 
 on:
   workflow_dispatch:
@@ -9,6 +9,10 @@ on:
         required: true
       setLatest:
         description: 'Is this the latest version?'
+        type: boolean
+        required: true
+      setMajorLatest:
+        description: 'Is this the latest version of its major (e.g. 6.7-latest)?'
         type: boolean
         required: true
 
@@ -30,5 +34,6 @@ jobs:
           IMAGE: shopware
           VERSION: ${{ github.event.inputs.version }}
           IS_LATEST: ${{ github.event.inputs.setLatest }}
+          IS_MAJOR_LATEST: ${{ github.event.inputs.setMajorLatest }}
           # -------------------------------------------
           CIRCLECI_KEY: ${{ secrets.CIRCLE_CI_TOKEN }}

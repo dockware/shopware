@@ -12,6 +12,10 @@ parameters:
     type: boolean
     description: "defines if the latest tag should be set to this version"
     default: false
+  setMajorLatest:
+    type: boolean
+    description: "defines if the major-latest tag (e.g. 6.7-latest) should be set to this version"
+    default: false
 
 # -----------------------------------------------------------------------------------------------------
 # -----------------------------------------------------------------------------------------------------
@@ -42,6 +46,7 @@ workflows:
           imageName: << pipeline.parameters.imageName >>
           imageTag: << pipeline.parameters.imageTag >>
           setLatest: << pipeline.parameters.setLatest >>
+          setMajorLatest: << pipeline.parameters.setMajorLatest >>
           requires:
             - dockware/<< pipeline.parameters.imageName >>:<< pipeline.parameters.imageTag >>-arm-64
             - dockware/<< pipeline.parameters.imageName >>:<< pipeline.parameters.imageTag >>-amd-64
@@ -104,6 +109,8 @@ jobs:
             type: string
           setLatest:
             type: boolean
+          setMajorLatest:
+            type: boolean
       steps:
           # ------------------------------------------------------------------------------------
           - run:
@@ -123,6 +130,15 @@ jobs:
                 if [ << parameters.setLatest >> = true ]; then
                   docker manifest create dockware/<< parameters.imageName >>:latest --amend dockware/<< parameters.imageName >>:<< parameters.imageTag >>-amd64 --amend dockware/<< parameters.imageName >>:<< parameters.imageTag >>-arm64
                   docker manifest push dockware/<< parameters.imageName >>:latest
+                fi
+          # ------------------------------------------------------------------------------------
+          - run:
+              name: Create and push manifest (major-latest)
+              command: |
+                if [ << parameters.setMajorLatest >> = true ]; then
+                  MAJOR_TAG="$(echo "<< parameters.imageTag >>" | cut -f 1,2 -d '.')-latest"
+                  docker manifest create dockware/<< parameters.imageName >>:${MAJOR_TAG} --amend dockware/<< parameters.imageName >>:<< parameters.imageTag >>-amd64 --amend dockware/<< parameters.imageName >>:<< parameters.imageTag >>-arm64
+                  docker manifest push dockware/<< parameters.imageName >>:${MAJOR_TAG}
                 fi
 
 # -----------------------------------------------------------------------------------------------------

@@ -30,5 +30,6 @@ jobs:
           IMAGE: shopware-essentials
           VERSION: ${{ github.event.inputs.version }}
           IS_LATEST: ${{ github.event.inputs.setLatest }}
+          IS_MAJOR_LATEST: false
           # -------------------------------------------
           CIRCLECI_KEY: ${{ secrets.CIRCLE_CI_TOKEN }}

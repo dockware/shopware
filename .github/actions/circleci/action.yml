@@ -17,6 +17,9 @@ inputs:
   IS_LATEST:
     description: "Whether its the latest or not"
     required: true
+  IS_MAJOR_LATEST:
+    description: "Whether its the latest of its major version (e.g. 6.7-latest)"
+    required: true
 
 runs:
   using: "composite"
@@ -25,4 +28,4 @@ runs:
     - name: Trigger CircleCI
       shell: bash
       run: |
-        cd .circleci && sh run-img.sh ${{ inputs.BRANCH }} ${{ inputs.CIRCLECI_KEY }} ${{ inputs.IMAGE }} ${{ inputs.VERSION }} ${{ inputs.IS_LATEST }}
+        cd .circleci && sh run-img.sh ${{ inputs.BRANCH }} ${{ inputs.CIRCLECI_KEY }} ${{ inputs.IMAGE }} ${{ inputs.VERSION }} ${{ inputs.IS_LATEST }} ${{ inputs.IS_MAJOR_LATEST }}
