@@ -121,15 +121,17 @@ jobs:
           - run:
               name: Create and push manifest (<< parameters.imageTag >>)
               command: |
-                docker manifest create dockware/<< parameters.imageName >>:<< parameters.imageTag >> --amend dockware/<< parameters.imageName >>:<< parameters.imageTag >>-amd64 --amend dockware/<< parameters.imageName >>:<< parameters.imageTag >>-arm64
-                docker manifest push dockware/<< parameters.imageName >>:<< parameters.imageTag >>
+                docker buildx imagetools create -t dockware/<< parameters.imageName >>:<< parameters.imageTag >> \
+                  dockware/<< parameters.imageName >>:<< parameters.imageTag >>-amd64 \
+                  dockware/<< parameters.imageName >>:<< parameters.imageTag >>-arm64
           # ------------------------------------------------------------------------------------
           - run:
               name: Create and push manifest (latest)
               command: |
                 if [ << parameters.setLatest >> = true ]; then
-                  docker manifest create dockware/<< parameters.imageName >>:latest --amend dockware/<< parameters.imageName >>:<< parameters.imageTag >>-amd64 --amend dockware/<< parameters.imageName >>:<< parameters.imageTag >>-arm64
-                  docker manifest push dockware/<< parameters.imageName >>:latest
+                  docker buildx imagetools create -t dockware/<< parameters.imageName >>:latest \
+                    dockware/<< parameters.imageName >>:<< parameters.imageTag >>-amd64 \
+                    dockware/<< parameters.imageName >>:<< parameters.imageTag >>-arm64
                 fi
           # ------------------------------------------------------------------------------------
           - run:
@@ -137,8 +139,9 @@ jobs:
               command: |
                 if [ << parameters.setMajorLatest >> = true ]; then
                   MAJOR_TAG="$(echo "<< parameters.imageTag >>" | cut -f 1,2 -d '.')-latest"
-                  docker manifest create dockware/<< parameters.imageName >>:${MAJOR_TAG} --amend dockware/<< parameters.imageName >>:<< parameters.imageTag >>-amd64 --amend dockware/<< parameters.imageName >>:<< parameters.imageTag >>-arm64
-                  docker manifest push dockware/<< parameters.imageName >>:${MAJOR_TAG}
+                  docker buildx imagetools create -t dockware/<< parameters.imageName >>:${MAJOR_TAG} \
+                    dockware/<< parameters.imageName >>:<< parameters.imageTag >>-amd64 \
+                    dockware/<< parameters.imageName >>:<< parameters.imageTag >>-arm64
                 fi
 
 # -----------------------------------------------------------------------------------------------------
