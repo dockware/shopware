@@ -28,6 +28,15 @@ endif
 	@# ---------------------------------------------------------------------------------------
 	sudo sed -i '/^date\.timezone/c\date.timezone = $(TZ)' /etc/php/$(version)/fpm/conf.d/01-general.ini
 	sudo sed -i '/^date\.timezone/c\date.timezone = $(TZ)' /etc/php/$(version)/cli/conf.d/01-general.ini
+ifeq ($(version),$(PHP_VERSION_CURRENT))
+	@# Requested PHP version is already the active one - skip the slow FPM stop/start
+	@# dance (start-stop-daemon retries take ~30s because php-fpm renames itself in argv).
+	@# We still substitute the apache placeholder and restart apache so the entrypoint's
+	@# subsequent restart finds a consistent state and doesn't trip on orphaned workers.
+	@echo "PHP $(version) is already active, skipping FPM switch"
+	sudo sed -i 's/__dockware_php_version__/'$(version)'/g' /etc/apache2/sites-enabled/000-default.conf 2>/dev/null >/dev/null 2>&1
+	sudo service apache2 restart
+else
 	@# ---------------------------------------------------------------------------------------
 	@# Start new PHP to see if its existing, then stop current one, and if we use the same php version that
 	@# is currently used, just make sure to start it again ;)
@@ -44,6 +53,7 @@ endif
 	@# ---------------------------------------------------------------------------------------
 	@# last but not least update php for cli -> this is used for our variable in here
 	sudo update-alternatives --set php /usr/bin/php$(version)
+endif
 ifeq ($(XDEBUG_STATUS),1)
 	make xdebug-on
 else

@@ -8,6 +8,20 @@ Because this is the foundation of the Shopware environment, we will always relea
 changes in the operating system or packages. New Shopware versions, built with this version, will then automatically
 contain these changes.
 
+## [1.4.0]
+
+### Added
+
+- Add PHP 8.5
+
+### Fixed
+
+- Fixed container startup crash when Apache could not restart due to a stale PID file or lingering `apache2` workers from an earlier start attempt.
+
+### Changed
+
+- Skip the PHP-FPM stop/start dance in `make switch-php` when the requested PHP version is already the active one. Significantly speeds up container startup for images that don't actually change the PHP version.
+
 ## [1.3.0]
 
 ### Added
@@ -16,8 +30,9 @@ contain these changes.
 
 ### Fixed
 
-- Mailcatcher was not correctly configured to be used in SSMTP configurations. 
-- Fixed an issue where Shopware was always installed using PHP 8.3, causing crashes when running images with a different PHP versions (e.g. 8.2) and PHP boot scripts or ENV variables (SW_API_ACCESS_KEY, ...). Shopware is now installed using its minimum required PHP version, ensuring compatibility across all configured PHP versions.
+- Mailcatcher was not correctly configured to be used in SSMTP configurations.
+- Fixed an issue where Shopware was always installed using PHP 8.3, causing crashes when running images with a different PHP versions (e.g. 8.2) and PHP boot scripts or ENV variables (SW_API_ACCESS_KEY, ...). Shopware is now installed using its
+  minimum required PHP version, ensuring compatibility across all configured PHP versions.
 
 ## [1.2.0]
 
