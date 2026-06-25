@@ -22,7 +22,7 @@ describe('Shopware Storefront', () => {
 
         cy.visit('/');
 
-        cy.get('.nav-item-a515ae260223466f8e37471d279e6406-link > .main-navigation-link-text').click();
+        cy.get('.nav-item-a515ae260223466f8e37471d279e6406 > .main-navigation-link-text > span').click();
 
         cy.contains('Main product with properties');
     })
