@@ -7,7 +7,7 @@
 # adjust the shopware version here!
 # this is the one, that will be installed in the shopware image
 # however, it the tag can still use "dev-main" as version for nightly builds while still this version is installed
-CURRENT_SW_VERSION:=6.7.12.2
+CURRENT_SW_VERSION:=6.7.13.0
 # ------------------------------
 # this is the minimum php version for Shopware, it will be installed using this version
 CURRENT_SW_VERSION_MIN_PHP:=8.2
