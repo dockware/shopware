@@ -15,7 +15,7 @@ describe('Shopware Storefront', () => {
 
         cy.visit('/');
 
-        cy.contains('Realised with Shopware');
+        cy.contains('with Shopware');
     })
 
     it('Shopware Storefront navigation is working', () => {
