@@ -42,20 +42,25 @@ describe('Shopware Administration', () => {
 
         adminAction.login();
 
-        cy.contains('.sw-version__info', shopware.getVersion());
+        if (shopware.isVersionGreaterEqual('6.7.15.0')) {
+            // since 6.7.15.0 the version is only visible in the user actions menu
+            cy.contains('[id^="reka-dropdown-menu-trigger"]', /admin/i, {timeout: 10000}).click();
+            cy.contains('.sw-admin-menu__user-actions-menu .sw-version__info', shopware.getVersion());
+        } else {
+            cy.contains('.sw-version__info', shopware.getVersion());
+        }
     })
 
     it('Dockware Sample Plugin is installed', () => {
 
         adminAction.login();
 
-        cy.get('.sw-extension > span.sw-admin-menu__navigation-link > .sw-admin-menu__navigation-link-label').click();
-        cy.get('.sw-extension-my-extensions > .sw-admin-menu__navigation-link > .sw-admin-menu__navigation-link-label').click();
+        // wait until the login is done, before navigating directly to the extension listing
+        cy.get('.sw-admin-menu', {timeout: 10000}).should('be.visible');
+        cy.visit('/admin#/sw/extension/my-extensions/listing/app');
 
-        const rowDockwarePlugin = ':nth-child(2) > .sw-meteor-card__content > .sw-meteor-card__content-wrapper';
-
-        cy.contains(rowDockwarePlugin, 'Dockware Sample Plugin', {timeout: 10000});
-        cy.contains(rowDockwarePlugin, 'Installed', {timeout: 10000});
+        cy.contains('.sw-extension-card-base', 'Dockware Sample Plugin', {timeout: 10000})
+            .should('contain', 'Installed');
     })
 
 })
