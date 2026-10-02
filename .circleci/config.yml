@@ -172,6 +172,13 @@ commands:
             sudo mv composer.phar /usr/local/bin/composer
       # ------------------------------------------------------------------------------------
       - run:
+          name: Install Node.js 22 (required by Cypress 16)
+          command: |
+            nvm install 22
+            nvm alias default 22
+            node -v
+      # ------------------------------------------------------------------------------------
+      - run:
           name: Install Build Dependencies
           command: |
             make install

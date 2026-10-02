@@ -6,7 +6,7 @@ class Devices {
      */
     getDevices() {
         const configDevices = Cypress.config('devices');
-        let envDevice = Cypress.env('device');
+        let envDevice = Cypress.expose('device');
         
         var list = [];
         
