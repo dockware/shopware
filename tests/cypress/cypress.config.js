@@ -11,6 +11,10 @@ module.exports = defineConfig({
     screenshotOnRunFailure: true,
     video: false,
     videoCompression: 50,
+    // the Shopware Administration is a heavy SPA and crashed the Electron renderer
+    // on the CircleCI machines. free memory between tests and do not keep old DOM snapshots
+    numTestsKeptInMemory: 0,
+    experimentalMemoryManagement: true,
     devices: [
         {
             key: 'desktop',

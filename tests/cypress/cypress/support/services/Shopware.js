@@ -6,7 +6,7 @@ export default class Shopware {
      * @returns {*}
      */
     getVersion() {
-        return Cypress.env().SHOPWARE;
+        return Cypress.expose('SHOPWARE');
     }
 
     /**

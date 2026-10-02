@@ -51,7 +51,7 @@ ifndef shopware
 	$(warning Please provide the shopware version argument to Start Cypress!)
 	@exit 1
 endif
-	CYPRESS_BASE_URL=$(url) CYPRESS_SHOPWARE=$(shopware) ./node_modules/.bin/cypress open --env conf=dev
+	CYPRESS_BASE_URL=$(url) ./node_modules/.bin/cypress open --expose SHOPWARE=$(shopware),conf=dev
 
 run: ##3 Runs all E2E tests for Flex (make run url=xy shopware=xy)
 ifndef url
@@ -62,4 +62,5 @@ ifndef shopware
 	$(warning Please provide the shopware version argument to Start Cypress!)
 	@exit 1
 endif
-	CYPRESS_BASE_URL=$(url) CYPRESS_SHOPWARE=$(shopware) ./node_modules/.bin/cypress run --headless
+	@# use /tmp instead of the small /dev/shm and disable the GPU to avoid Electron renderer crashes in CI
+	ELECTRON_EXTRA_LAUNCH_ARGS="--disable-dev-shm-usage --disable-gpu" CYPRESS_BASE_URL=$(url) ./node_modules/.bin/cypress run --headless --expose SHOPWARE=$(shopware)
