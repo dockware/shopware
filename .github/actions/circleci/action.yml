@@ -19,7 +19,8 @@ inputs:
     required: true
   IS_MAJOR_LATEST:
     description: "Whether its the latest of its major version (e.g. 6.7-latest)"
-    required: true
+    required: false
+    default: "false"
 
 runs:
   using: "composite"
