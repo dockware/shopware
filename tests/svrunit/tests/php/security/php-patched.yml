@@ -1,0 +1,49 @@
+# these are the minimum PHP versions that include the security fixes
+# of the PHP security release from 2026-10-21 (8.2.35, 8.3.36, 8.4.27, 8.5.12).
+# no dockware image is allowed to ship an older (vulnerable) PHP version.
+# if a new security release comes out, just raise the versions in here.
+commands:
+
+  # -----------------------------------------------------------------------------------------
+  # PHP 8.5
+
+  - name: "Security: PHP 8.5 CLI is patched (>= 8.5.12)"
+    command: "V=$(php8.5 -v | head -n1 | cut -d\" \" -f2) && dpkg --compare-versions $V ge 8.5.12 && echo PHP-PATCHED $V || echo PHP-VULNERABLE $V"
+    expected: "PHP-PATCHED"
+
+  - name: "Security: PHP 8.5 FPM is patched (>= 8.5.12)"
+    command: "V=$(php-fpm8.5 -v | head -n1 | cut -d\" \" -f2) && dpkg --compare-versions $V ge 8.5.12 && echo PHP-PATCHED $V || echo PHP-VULNERABLE $V"
+    expected: "PHP-PATCHED"
+
+  # -----------------------------------------------------------------------------------------
+  # PHP 8.4
+
+  - name: "Security: PHP 8.4 CLI is patched (>= 8.4.27)"
+    command: "V=$(php8.4 -v | head -n1 | cut -d\" \" -f2) && dpkg --compare-versions $V ge 8.4.27 && echo PHP-PATCHED $V || echo PHP-VULNERABLE $V"
+    expected: "PHP-PATCHED"
+
+  - name: "Security: PHP 8.4 FPM is patched (>= 8.4.27)"
+    command: "V=$(php-fpm8.4 -v | head -n1 | cut -d\" \" -f2) && dpkg --compare-versions $V ge 8.4.27 && echo PHP-PATCHED $V || echo PHP-VULNERABLE $V"
+    expected: "PHP-PATCHED"
+
+  # -----------------------------------------------------------------------------------------
+  # PHP 8.3
+
+  - name: "Security: PHP 8.3 CLI is patched (>= 8.3.36)"
+    command: "V=$(php8.3 -v | head -n1 | cut -d\" \" -f2) && dpkg --compare-versions $V ge 8.3.36 && echo PHP-PATCHED $V || echo PHP-VULNERABLE $V"
+    expected: "PHP-PATCHED"
+
+  - name: "Security: PHP 8.3 FPM is patched (>= 8.3.36)"
+    command: "V=$(php-fpm8.3 -v | head -n1 | cut -d\" \" -f2) && dpkg --compare-versions $V ge 8.3.36 && echo PHP-PATCHED $V || echo PHP-VULNERABLE $V"
+    expected: "PHP-PATCHED"
+
+  # -----------------------------------------------------------------------------------------
+  # PHP 8.2
+
+  - name: "Security: PHP 8.2 CLI is patched (>= 8.2.35)"
+    command: "V=$(php8.2 -v | head -n1 | cut -d\" \" -f2) && dpkg --compare-versions $V ge 8.2.35 && echo PHP-PATCHED $V || echo PHP-VULNERABLE $V"
+    expected: "PHP-PATCHED"
+
+  - name: "Security: PHP 8.2 FPM is patched (>= 8.2.35)"
+    command: "V=$(php-fpm8.2 -v | head -n1 | cut -d\" \" -f2) && dpkg --compare-versions $V ge 8.2.35 && echo PHP-PATCHED $V || echo PHP-VULNERABLE $V"
+    expected: "PHP-PATCHED"
