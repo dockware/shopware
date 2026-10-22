@@ -22,6 +22,9 @@ sudo update-alternatives --set php /usr/bin/php$SHOPWARE_MIN_PHP > /dev/null 2>&
 # -------------------------------------------------------------------------------------------
 rm -rf /var/www/html
 cd /var/www && composer create-project shopware/production:"$SHOPWARE_VERSION" --no-interaction --no-cache --no-dev html
+# Twig 3.29 changed the compilation of macros, which is not compatible with the MacroOverrideNode of Shopware 6.5.
+# every template with macros (e.g. the Symfony debug toolbar) would end in a PHP syntax error
+cd /var/www/html && composer require --no-interaction "twig/twig:<3.29"
 cd /var/www/html && composer require --dev shopware/dev-tools
 # -------------------------------------------------------------------------------------------
 # ALWAYS UPDATE .env itself
