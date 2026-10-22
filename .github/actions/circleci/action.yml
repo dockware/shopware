@@ -5,6 +5,9 @@ inputs:
   CIRCLECI_KEY:
     description: "CircleCI token"
     required: true
+  BRANCH:
+    description: "The branch that should be released"
+    required: true
   IMAGE:
     description: "The image that should be released"
     required: true
@@ -22,4 +25,4 @@ runs:
     - name: Trigger CircleCI
       shell: bash
       run: |
-        cd .circleci && sh run-img.sh ${{ inputs.CIRCLECI_KEY }} ${{ inputs.IMAGE }} ${{ inputs.VERSION }} ${{ inputs.IS_LATEST }}
+        cd .circleci && sh run-img.sh ${{ inputs.BRANCH }} ${{ inputs.CIRCLECI_KEY }} ${{ inputs.IMAGE }} ${{ inputs.VERSION }} ${{ inputs.IS_LATEST }}

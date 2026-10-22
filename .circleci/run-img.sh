@@ -3,17 +3,28 @@
 REPO_NAME="shopware"
 
 if [ $# -lt 3 ]; then
-  echo "Usage: $0 <CIRCLE_CI_TOKEN> <IMAGE_NAME> <IMAGE_TAG> <IS_LATEST> "
+  echo "Usage: $0 <BRANCH> <CIRCLE_CI_TOKEN> <IMAGE_NAME> <IMAGE_TAG> <IS_LATEST> "
   exit 1
 fi
 
-TOKEN=$1
-IMAGE_NAME=$2
-IMAGE_TAG=$3
-IS_LATEST=$4
+BRANCH=$1
+TOKEN=$2
+IMAGE_NAME=$3
+IMAGE_TAG=$4
+IS_LATEST=$5
+
+# CircleCI needs to know which git ref to build.
+# without it, CircleCI always builds the default branch (main), which would install
+# the Shopware version of main, even if the release was started on a LTS branch.
+# git tags (e.g. sw-6.7.9.1) need to be sent as "tag", everything else is a branch
+case "$BRANCH" in
+  sw-*|essentials-*) REF_TYPE="tag" ;;
+  *)                 REF_TYPE="branch" ;;
+esac
 
 cat <<EOT > body.json
 {
+  "$REF_TYPE": "$BRANCH",
   "parameters": {
     "imageName": "$IMAGE_NAME",
     "imageTag": "$IMAGE_TAG",
@@ -24,9 +35,13 @@ EOT
 
 cat body.json
 
-curl -X POST -d @body.json \
+# fail the GitHub action, if CircleCI rejects the pipeline (e.g. unknown branch)
+curl --fail-with-body -X POST -d @body.json \
      -H "Content-Type: application/json" \
      -H "Circle-Token: $TOKEN" \
      "https://circleci.com/api/v2/project/github/dockware/$REPO_NAME/pipeline"
+RESULT=$?
 
 rm -rf body.json
+
+exit $RESULT
