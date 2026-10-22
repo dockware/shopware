@@ -1,5 +1,5 @@
 # these are the minimum PHP versions that include the security fixes
-# of the PHP security release from 2026-10-21 (8.2.35, 8.3.36, 8.4.27, 8.5.12).
+# of the PHP security release from 2026-10-21 (8.2.35, 8.3.36, 8.4.27, 8.5.12, ondrej PPA 8.1.34-9).
 # no dockware image is allowed to ship an older (vulnerable) PHP version.
 # if a new security release comes out, just raise the versions in here.
 commands:
@@ -46,4 +46,17 @@ commands:
 
   - name: "Security: PHP 8.2 FPM is patched (>= 8.2.35)"
     command: "V=$(php-fpm8.2 -v | head -n1 | cut -d\" \" -f2) && dpkg --compare-versions $V ge 8.2.35 && echo PHP-PATCHED $V || echo PHP-VULNERABLE $V"
+    expected: "PHP-PATCHED"
+
+  # -----------------------------------------------------------------------------------------
+  # PHP 8.1 (only installed in older images, e.g. Shopware 6.5)
+  # PHP 8.1 is EOL, upstream stays at 8.1.34. the fixes are only backported by the ondrej PPA,
+  # so we need to check the package revision instead of the PHP version (8.1.34-9 = 2026-10-21)
+
+  - name: "Security: PHP 8.1 CLI is patched (>= 8.1.34-9), if installed"
+    command: "if [ -x /usr/bin/php8.1 ]; then V=$(dpkg-query -W php8.1-cli | cut -f2) && dpkg --compare-versions $V ge 8.1.34-9 && echo PHP-PATCHED $V || echo PHP-VULNERABLE $V; else echo PHP-PATCHED not-installed; fi"
+    expected: "PHP-PATCHED"
+
+  - name: "Security: PHP 8.1 FPM is patched (>= 8.1.34-9), if installed"
+    command: "if [ -x /usr/sbin/php-fpm8.1 ]; then V=$(dpkg-query -W php8.1-fpm | cut -f2) && dpkg --compare-versions $V ge 8.1.34-9 && echo PHP-PATCHED $V || echo PHP-VULNERABLE $V; else echo PHP-PATCHED not-installed; fi"
     expected: "PHP-PATCHED"
