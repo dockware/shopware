@@ -26,7 +26,8 @@ jobs:
         uses: ./.github/actions/circleci
         with:
           # -------------------------------------------
-          BRANCH: ${GITHUB_REF_NAME}
+          # the branch that is selected in "Use workflow from" (e.g. lts/sw-6.6.10.25)
+          BRANCH: ${{ github.ref_name }}
           IMAGE: shopware
           VERSION: ${{ github.event.inputs.version }}
           IS_LATEST: ${{ github.event.inputs.setLatest }}
