@@ -1,23 +1,27 @@
 #!/usr/bin/env python3
-# Hourly PHP watcher (see .github/workflows/php-watcher.yml).
+# PHP watcher, called every hour by .github/workflows/php-watcher.yml (the WHY is described there).
 #
-# Compares the php-fpm versions the ondrej/php PPA currently publishes with the
-# versions of our last release (.github/php-versions.json). When a PHP version
-# got a new package version it
-#   (a new PHP release like 8.4.27 -> 8.4.28, or a new ondrej/php package revision like
-#   7.4.33-31 -> 7.4.33-32, which is how security fixes are backported to EOL versions 7.4, 8.0, 8.1)
-#   - bumps the shopware-essentials patch version from the newest CHANGELOG.md entry (1.4.0 -> 1.4.1),
+# Compares the php-fpm package versions the ondrej/php PPA currently publishes with the
+# versions of our last release (.github/php-versions.json). When a PHP version got a new package
+# version (a new PHP release like 8.4.27 -> 8.4.28, or a new ondrej/php package revision like
+# 8.4.27-1 -> 8.4.27-2, which is how security fixes are backported), it
+#   - bumps the shopware-essentials patch version: highest version of CHANGELOG.md and Docker Hub + 1 (1.5.0 -> 1.5.1),
 #   - adds a changelog entry for the new release,
-#   - raises the PHP versions in the existing SVRUnit tests (tests/svrunit/**/*.yml),
-#     so the release build fails if an outdated mirror delivered an older PHP version,
+#   - raises the PHP versions in the existing SVRUnit tests (tests/svrunit/**/*.yml) to the new
+#     package version, so a build from an outdated mirror (old PHP package) fails before anything is pushed,
 #   - updates .github/php-versions.json,
 #   - writes release=true and version=x.y.z to $GITHUB_OUTPUT.
 # The workflow then commits these files and starts the CircleCI releases
-# (essentials, current Shopware version and the LTS versions).
+# (shopware-essentials and the Shopware images from tests/scripts/php_watch_targets.py).
 #
-# Nothing happens while the PPA is not in sync for amd64 and arm64,
-# a multi-arch build in that window ends up with mismatching or broken packages.
+# Nothing is released while
+#   - the PPA is not in sync for amd64 and arm64 (a multi-arch build in that window ends up
+#     with mismatching or broken packages),
+#   - Launchpad or Docker Hub can't be reached.
 # The next run tries again.
+#
+# If .github/php-versions.json does not exist, it is created with the current versions and
+# nothing is released (bootstrap=true).
 #
 # Options:
 #   --dry-run            only print what would happen, change no files.
