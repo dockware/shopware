@@ -1,3 +1,8 @@
+commands:
+  - name: "php8.3-cli package is >= 8.3.37-1 (security release 2026-11-19)"
+    command: "dpkg --compare-versions $(dpkg-query -W php8.3-cli | cut -f2) ge 8.3.37-1 && echo PATCHED || echo VULNERABLE"
+    expected: "PATCHED"
+
 php_module:
   - name: "PHP Module: intl"
     module: "intl"

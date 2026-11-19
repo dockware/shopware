@@ -8,6 +8,12 @@ Because this is the foundation of the Shopware environment, we will always relea
 changes in the operating system or packages. New Shopware versions, built with this version, will then automatically
 contain these changes.
 
+## [1.4.1]
+
+### Security
+
+- Updated PHP to 8.2.36, 8.3.37, 8.4.28 and 8.5.13, including the security fixes released on 2026-11-19.
+
 ## [1.4.0]
 
 ### Added
