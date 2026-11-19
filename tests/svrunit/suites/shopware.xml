@@ -89,6 +89,22 @@
             <directory>../tests/features/xdebug-on</directory>
         </testsuite>
 
+        <testsuite name="PHP 8.4, XDebug ON" group="php" dockerImage="dockware/shopware:{{tag}}" dockerEnv="PHP_VERSION=8.4,XDEBUG_ENABLED=1">
+            <directory>../tests/php/php8.4</directory>
+            <directory>../tests/tools/xdebug/xdebug3</directory>
+            <directory>../tests/tools/composer/v2</directory>
+            <directory>../tests/tools/tideways/config</directory>
+            <directory>../tests/features/xdebug-on</directory>
+        </testsuite>
+
+        <testsuite name="PHP 8.1, XDebug ON" group="php" dockerImage="dockware/shopware:{{tag}}" dockerEnv="PHP_VERSION=8.1,XDEBUG_ENABLED=1">
+            <directory>../tests/php/php8.1</directory>
+            <directory>../tests/tools/xdebug/xdebug3</directory>
+            <directory>../tests/tools/composer/v2</directory>
+            <directory>../tests/tools/tideways/config</directory>
+            <directory>../tests/features/xdebug-on</directory>
+        </testsuite>
+
         <testsuite name="Restart PHP" group="php" dockerImage="dockware/shopware:{{tag}}">
             <directory>../tests/features/restart-php</directory>
         </testsuite>

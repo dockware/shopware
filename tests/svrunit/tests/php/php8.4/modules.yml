@@ -5,6 +5,9 @@ commands:
   - name: "PHP version is not RC"
     command: "php -v"
     not_expected: "RC"
+  - name: "php8.4-cli package is >= 8.4.28-1 (security release 2026-11-19)"
+    command: "dpkg --compare-versions $(dpkg-query -W php8.4-cli | cut -f2) ge 8.4.28-1 && echo PATCHED || echo VULNERABLE"
+    expected: "PATCHED"
 
 php_module:
   - name: "PHP Module: intl"
