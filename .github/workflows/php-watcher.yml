@@ -58,8 +58,10 @@ on:
     - cron: "17 * * * *"
 
 env:
-  # Shopware majors that are NOT rebuilt, even if they have a <major>-latest tag (space separated, e.g. "6.5")
-  SKIP_MAJORS: ""
+  # Shopware majors that are NOT rebuilt, even if they have a <major>-latest tag (space separated, e.g. "6.5").
+  # 6.6 and 6.5 are left out for now: their LTS branches still install PHP from the Launchpad PPA, which gets
+  # no new PHP versions for noble anymore. Remove them here once their branches use packages.sury.org.
+  SKIP_MAJORS: "6.6 6.5"
 
 # never run two watchers at once, otherwise both could release the same version
 concurrency:
