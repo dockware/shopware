@@ -1,5 +1,5 @@
 name: PHP Watcher
-run-name: Check ondrej/php for new PHP versions
+run-name: Check packages.sury.org for new PHP versions
 
 # =====================================================================================================
 # PHP WATCHER
@@ -7,15 +7,15 @@ run-name: Check ondrej/php for new PHP versions
 #
 # WHY
 #   dockware/shopware-essentials and dockware/shopware ship PHP 8.2 - 8.5 (6.5 images also 8.1) from the
-#   ondrej/php PPA. When a PHP security fix comes out, our images stay vulnerable until somebody builds
+#   PHP repository packages.sury.org (Ondrej Sury). When a PHP security fix comes out, our images stay vulnerable until somebody builds
 #   and releases them by hand. This workflow does that automatically, at most one hour after the fix
 #   is available for all architectures.
 #
 # WHAT (every hour at :17, or manually via "Run workflow")
-#   1. tests/scripts/php_watch.py compares the php-fpm package versions the PPA publishes with
+#   1. tests/scripts/php_watch.py compares the php-fpm package versions packages.sury.org publishes for noble with
 #      the versions of our last release (.github/php-versions.json).
 #      A change is either a new PHP release (8.4.27 -> 8.4.28) or a new package revision
-#      (8.4.27-1 -> 8.4.27-2). Revisions matter: that is how ondrej backports security fixes,
+#      (8.4.27-1 -> 8.4.27-2). Revisions matter: that is how Ondrej backports security fixes,
 #      so both trigger a release.
 #   2. if something changed, the script
 #        - takes the highest shopware-essentials version of CHANGELOG.md and Docker Hub and bumps the patch
@@ -36,9 +36,9 @@ run-name: Check ondrej/php for new PHP versions
 #   - outdated mirror: apt mirrors can still deliver the old PHP package for a while. Because the SVRUnit
 #     tests were raised in step 2, such a build fails in CircleCI and nothing is pushed.
 #     LTS branches keep their own (older) tests, the watcher only commits to main.
-#   - amd64/arm64 out of sync: Launchpad sometimes builds arm64 hours after amd64. As long as the
+#   - amd64/arm64 out of sync: the repository sometimes gets arm64 hours after amd64. As long as the
 #     versions differ, nothing happens, the next run tries again.
-#   - Launchpad or Docker Hub not reachable: the run is skipped with a warning, the next run tries again.
+#   - packages.sury.org or Docker Hub not reachable: the run is skipped with a warning, the next run tries again.
 #   - concurrency: two watcher runs never run at the same time, so a version is never released twice.
 #   - a failed CircleCI build is NOT retried automatically. Version and changelog are already on main,
 #     so start the release workflows with the same version again once the cause is fixed.
@@ -83,9 +83,9 @@ jobs:
           # if main is protected, use a token that may push to it (e.g. a PAT in this secret)
           token: ${{ secrets.PHP_WATCHER_TOKEN || github.token }}
 
-      # compares the PPA with .github/php-versions.json and prepares the release files.
+      # compares packages.sury.org with .github/php-versions.json and prepares the release files.
       # outputs: release=true + version=x.y.z, or bootstrap=true if php-versions.json did not exist yet
-      - name: Check ondrej/php PPA
+      - name: Check PHP repository
         id: watch
         run: |
           python3 tests/scripts/php_watch.py

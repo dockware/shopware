@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 # PHP watcher, called every hour by .github/workflows/php-watcher.yml (the WHY is described there).
 #
-# Compares the php-fpm package versions the ondrej/php PPA currently publishes with the
+# Compares the php-fpm package versions packages.sury.org (Ondrej Sury) currently publishes for noble with the
 # versions of our last release (.github/php-versions.json). When a PHP version got a new package
-# version (a new PHP release like 8.4.27 -> 8.4.28, or a new ondrej/php package revision like
+# version (a new PHP release like 8.4.27 -> 8.4.28, or a new package revision like
 # 8.4.27-1 -> 8.4.27-2, which is how security fixes are backported), it
 #   - bumps the shopware-essentials patch version: highest version of CHANGELOG.md and Docker Hub + 1 (1.5.0 -> 1.5.1),
 #   - adds a changelog entry for the new release,
@@ -15,9 +15,9 @@
 # (shopware-essentials and the Shopware images from tests/scripts/php_watch_targets.py).
 #
 # Nothing is released while
-#   - the PPA is not in sync for amd64 and arm64 (a multi-arch build in that window ends up
+#   - the repository is not in sync for amd64 and arm64 (a multi-arch build in that window ends up
 #     with mismatching or broken packages),
-#   - Launchpad or Docker Hub can't be reached.
+#   - packages.sury.org or Docker Hub can't be reached.
 # The next run tries again.
 #
 # If .github/php-versions.json does not exist, it is created with the current versions and
@@ -26,17 +26,22 @@
 # Options:
 #   --dry-run            only print what would happen, change no files.
 import argparse
+import functools
 import glob
+import gzip
 import json
 import os
 import re
+import subprocess
 import sys
 import time
 import urllib.request
 
 SERIES = "noble"  # ubuntu:24.04 in src/Dockerfile
 ARCHS = ["amd64", "arm64"]
-API = "https://api.launchpad.net/1.0/~ondrej/+archive/ubuntu/php?ws.op=getPublishedBinaries&binary_name=php{v}-fpm&exact_match=true&status=Published"
+# the php repository the image installs from (src/Dockerfile). The Launchpad ppa:ondrej/php
+# is being merged into packages.sury.org and gets no new PHP versions for noble anymore.
+PACKAGES = "https://packages.sury.org/php/dists/" + SERIES + "/main/binary-{arch}/Packages.gz"
 
 INSTALL_SCRIPT = "src/scripts/install_php.sh"
 LOCK_FILE = ".github/php-versions.json"
@@ -51,22 +56,44 @@ def upstream(package_version):
     return package_version.split(":", 1)[-1].split("-", 1)[0]
 
 
-def fetch(v):
-    # launchpad sometimes takes a long time to answer, retry before giving up
+def dpkg_compare(a, b):
+    # debian version order (epochs, revisions, ~), exactly like apt decides what gets installed
+    if a == b:
+        return 0
+    lower = subprocess.run(["dpkg", "--compare-versions", a, "lt", b]).returncode == 0
+    return -1 if lower else 1
+
+
+@functools.lru_cache(maxsize=None)
+def packages(arch):
+    # all package versions of the repository for one architecture: {"php8.4-fpm": ["8.4.27-1...", ...]}
+    # the repository sometimes answers slowly or with 503 right after releases, retry before giving up
     for attempt in range(1, 4):
         try:
-            entries = json.load(urllib.request.urlopen(API.format(v=v), timeout=60))["entries"]
+            with urllib.request.urlopen(PACKAGES.format(arch=arch), timeout=60) as r:
+                text = gzip.decompress(r.read()).decode()
             break
         except OSError as e:
-            print(f"PHP {v}: launchpad request failed (attempt {attempt}/3): {e}")
+            print(f"{arch}: php repository request failed (attempt {attempt}/3): {e}")
             if attempt == 3:
                 raise
             time.sleep(10 * attempt)
     found = {}
-    for e in entries:
-        series, arch = e["distro_arch_series_link"].split("/")[-2:]
-        if series == SERIES and arch in ARCHS:
-            found[arch] = e["binary_package_version"]
+    for block in text.split("\n\n"):
+        name = re.search(r"^Package: (\S+)", block, re.M)
+        version = re.search(r"^Version: (\S+)", block, re.M)
+        if name and version:
+            found.setdefault(name.group(1), []).append(version.group(1))
+    return found
+
+
+def fetch(v):
+    # newest php-fpm version per architecture, this is what apt installs in the image
+    found = {}
+    for arch in ARCHS:
+        versions = packages(arch).get(f"php{v}-fpm")
+        if versions:
+            found[arch] = max(versions, key=functools.cmp_to_key(dpkg_compare))
     return found
 
 
@@ -93,13 +120,13 @@ def main():
         try:
             found = fetch(v)
         except OSError as e:
-            # launchpad down: no release, the next run tries again
-            print(f"::warning::launchpad not reachable, skipping this run: {e}")
+            # repository down: no release, the next run tries again
+            print(f"::warning::php repository not reachable, skipping this run: {e}")
             output(release="false")
             return
         missing = [a for a in ARCHS if a not in found]
         if missing or len(set(found.values())) > 1:
-            print(f"PHP {v}: PPA NOT IN SYNC {found} missing={missing}, waiting for the next run")
+            print(f"PHP {v}: NOT IN SYNC for amd64/arm64 {found} missing={missing}, waiting for the next run")
             output(release="false")
             return
         current[v] = found[ARCHS[0]]
@@ -222,7 +249,7 @@ def write_changelog(version, changes):
         if upstream(old) != upstream(new):
             lines.append(f"- Updated PHP {v} from {upstream(old)} to {upstream(new)}.")
         else:
-            lines.append(f"- Updated PHP {v} package from {old} to {new} (ondrej/php package update, backported fixes).")
+            lines.append(f"- Updated PHP {v} package from {old} to {new} (package update, backported fixes).")
     entry = f"## [{version}]\n\n### Security\n\n" + "\n".join(lines) + "\n\n"
 
     with open(CHANGELOG) as f:
