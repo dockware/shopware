@@ -1,7 +1,7 @@
 name: PHP Watcher
 run-name: Check ondrej/php for new PHP versions
 
-# Checks every hour whether the ondrej/php PPA published a new PHP release for one of
+# Checks every hour whether the ondrej/php PPA published a new PHP package (new PHP release or backported fix) for one of
 # the PHP versions in src/scripts/install_php.sh. If so, it
 #   1. bumps the shopware-essentials version, adds a CHANGELOG.md entry and commits it to main,
 #   2. releases shopware-essentials (latest),
@@ -11,11 +11,6 @@ run-name: Check ondrej/php for new PHP versions
 
 on:
   workflow_dispatch:
-    inputs:
-      includeRevisions:
-        description: 'Also release on package-only rebuilds (e.g. 8.2.35-1 -> 8.2.35-2)'
-        type: boolean
-        default: false
   schedule:
     - cron: "17 * * * *"
 
@@ -48,7 +43,7 @@ jobs:
       - name: Check ondrej/php PPA
         id: watch
         run: |
-          python3 tests/scripts/php_watch.py ${{ github.event.inputs.includeRevisions == 'true' && '--include-revisions' || '' }}
+          python3 tests/scripts/php_watch.py
 
       - name: Commit Release
         if: steps.watch.outputs.release == 'true' || steps.watch.outputs.bootstrap == 'true'
