@@ -44,6 +44,7 @@ run-name: Check ondrej/php for new PHP versions
 #     so start the release workflows with the same version again once the cause is fixed.
 #
 # SETUP
+#   - runs on our own runners (runs-on: self-hosted) with python3, git and internet access
 #   - secret CIRCLE_CI_TOKEN (already used by the release workflows)
 #   - write access to main: either "Read and write permissions" for workflows, or, if main is protected,
 #     a token with push rights in the secret PHP_WATCHER_TOKEN.
@@ -73,7 +74,9 @@ jobs:
 
   watch:
     name: Check PHP Versions
-    runs-on: ubuntu-latest
+    # our own runners, not the GitHub hosted ones. needs python3, git and access to
+    # api.launchpad.net, hub.docker.com, github.com and circleci.com
+    runs-on: self-hosted
     steps:
 
       - name: Clone Code
