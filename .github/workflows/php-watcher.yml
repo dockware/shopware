@@ -1,0 +1,107 @@
+name: PHP Watcher
+run-name: Check ondrej/php for new PHP versions
+
+# Checks every hour whether the ondrej/php PPA published a new PHP release for one of
+# the PHP versions in src/scripts/install_php.sh. If so, it
+#   1. bumps the shopware-essentials version, adds a CHANGELOG.md entry and commits it to main,
+#   2. releases shopware-essentials (latest),
+#   3. rebuilds the current Shopware version of main (same tag, latest + <major>-latest),
+#   4. rebuilds the newest lts/sw-<major>.* branch of every major in LTS_MAJORS (same tag, <major>-latest).
+# Logic: tests/scripts/php_watch.py, state: .github/php-versions.json
+
+on:
+  workflow_dispatch:
+    inputs:
+      includeRevisions:
+        description: 'Also release on package-only rebuilds (e.g. 8.2.35-1 -> 8.2.35-2)'
+        type: boolean
+        default: false
+  schedule:
+    - cron: "17 * * * *"
+
+env:
+  # Shopware majors whose newest lts/sw-<major>.* branch is rebuilt as well (space separated)
+  LTS_MAJORS: "6.6"
+
+# never run two watchers at once, otherwise both could release the same version
+concurrency:
+  group: php-watcher
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+
+  watch:
+    name: Check PHP Versions
+    runs-on: ubuntu-latest
+    steps:
+
+      - name: Clone Code
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          # if main is protected, use a token that may push to it (e.g. a PAT in this secret)
+          token: ${{ secrets.PHP_WATCHER_TOKEN || github.token }}
+
+      - name: Check ondrej/php PPA
+        id: watch
+        run: |
+          python3 tests/scripts/php_watch.py ${{ github.event.inputs.includeRevisions == 'true' && '--include-revisions' || '' }}
+
+      - name: Commit Release
+        if: steps.watch.outputs.release == 'true' || steps.watch.outputs.bootstrap == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add CHANGELOG.md .github/php-versions.json
+          if [ "${{ steps.watch.outputs.release }}" = "true" ]; then
+            git commit -m "Release essentials ${{ steps.watch.outputs.version }} with new PHP versions"
+          else
+            git commit -m "Add PHP versions lock file for the PHP watcher"
+          fi
+          git push origin HEAD:main
+
+      - name: Release Essentials ${{ steps.watch.outputs.version }}
+        if: steps.watch.outputs.release == 'true'
+        uses: ./.github/actions/circleci
+        with:
+          BRANCH: main
+          IMAGE: shopware-essentials
+          VERSION: ${{ steps.watch.outputs.version }}
+          IS_LATEST: true
+          IS_MAJOR_LATEST: false
+          # -------------------------------------------
+          CIRCLECI_KEY: ${{ secrets.CIRCLE_CI_TOKEN }}
+
+      - name: Rebuild Shopware Images
+        if: steps.watch.outputs.release == 'true'
+        env:
+          CIRCLECI_KEY: ${{ secrets.CIRCLE_CI_TOKEN }}
+        run: |
+          set -e
+          sw_version() { grep -E '^CURRENT_SW_VERSION:=' | cut -d= -f2 | tr -d ' '; }
+
+          # current Shopware version of main
+          MAIN_VERSION=$(sw_version < makefile)
+          MAIN_MAJOR=$(echo "$MAIN_VERSION" | cut -d. -f1-2)
+          echo "main: Shopware $MAIN_VERSION"
+          (cd .circleci && sh run-img.sh main "$CIRCLECI_KEY" shopware "$MAIN_VERSION" true true)
+
+          # newest LTS branch of every configured major
+          for MAJOR in $LTS_MAJORS; do
+            if [ "$MAJOR" = "$MAIN_MAJOR" ]; then
+              echo "$MAJOR is the major of main, already released"
+              continue
+            fi
+            BRANCH=$(git ls-remote --heads origin "lts/sw-$MAJOR.*" | sed 's#.*refs/heads/##' | sort -V | tail -n 1)
+            if [ -z "$BRANCH" ]; then
+              echo "::warning::no lts/sw-$MAJOR.* branch found"
+              continue
+            fi
+            git fetch --depth 1 origin "$BRANCH"
+            VERSION=$(git show FETCH_HEAD:makefile | sw_version)
+            echo "$BRANCH: Shopware $VERSION"
+            (cd .circleci && sh run-img.sh "$BRANCH" "$CIRCLECI_KEY" shopware "$VERSION" false true)
+          done
