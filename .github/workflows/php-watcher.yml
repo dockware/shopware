@@ -55,7 +55,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add CHANGELOG.md .github/php-versions.json
+          git add CHANGELOG.md .github/php-versions.json tests/svrunit
           if [ "${{ steps.watch.outputs.release }}" = "true" ]; then
             git commit -m "Release essentials ${{ steps.watch.outputs.version }} with new PHP versions"
           else

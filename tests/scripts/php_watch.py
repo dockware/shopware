@@ -6,6 +6,8 @@
 # got a new upstream release (e.g. 8.4.27 -> 8.4.28) it
 #   - bumps the shopware-essentials patch version from the newest CHANGELOG.md entry (1.4.0 -> 1.4.1),
 #   - adds a changelog entry for the new release,
+#   - raises the minimum PHP versions in the SVRUnit tests (tests/svrunit/**/*.yml),
+#     so the release build fails if the image does not contain the new PHP version,
 #   - updates .github/php-versions.json,
 #   - writes release=true and version=x.y.z to $GITHUB_OUTPUT.
 # The workflow then commits these files and starts the CircleCI releases
@@ -21,6 +23,7 @@
 #                        ships backported fixes as new package revisions.
 #   --dry-run            only print what would happen, change no files.
 import argparse
+import glob
 import json
 import os
 import re
@@ -35,6 +38,7 @@ API = "https://api.launchpad.net/1.0/~ondrej/+archive/ubuntu/php?ws.op=getPublis
 INSTALL_SCRIPT = "src/scripts/install_php.sh"
 LOCK_FILE = ".github/php-versions.json"
 CHANGELOG = "CHANGELOG.md"
+SVRUNIT_TESTS = "tests/svrunit/**/*.yml"
 
 
 def upstream(package_version):
@@ -127,6 +131,7 @@ def main():
     print(f"New release {version}")
     if not args.dry_run:
         write_changelog(version, changes)
+        write_svrunit_tests(changes)
         write_lock(current)
     output(release="true", version=version)
 
@@ -144,6 +149,40 @@ def next_version():
         sys.exit(f"no '## [x.y.z]' release found in {CHANGELOG}")
     major, minor, patch = map(int, m.groups())
     return f"{major}.{minor}.{patch + 1}"
+
+
+def package(package_version):
+    # "1:7.4.33-31+ubuntu24.04.1+deb.sury.org+1" -> "1:7.4.33-31"
+    return package_version.split("+", 1)[0]
+
+
+def write_svrunit_tests(changes):
+    # the tests check minimum versions, e.g. "dpkg --compare-versions ... ge 8.4.27-1"
+    # or "... ge 8.4.27". Only lines that belong to the changed PHP version are touched.
+    for v, old, new in changes:
+        line_of_version = re.compile(rf"php(-fpm)?{re.escape(v)}(?![\d])")
+        old_upstream = re.compile(rf"(?<![\d.:]){re.escape(upstream(old))}(?![\d.-])")
+        updated = []
+        for path in sorted(glob.glob(SVRUNIT_TESTS, recursive=True)):
+            with open(path) as f:
+                lines = f.read().split("\n")
+            changed = False
+            for i, line in enumerate(lines):
+                if not line_of_version.search(line):
+                    continue
+                new_line = line.replace(package(old), package(new))
+                new_line = old_upstream.sub(upstream(new), new_line)
+                if new_line != line:
+                    lines[i] = new_line
+                    changed = True
+            if changed:
+                with open(path, "w") as f:
+                    f.write("\n".join(lines))
+                updated.append(path)
+        if updated:
+            print(f"PHP {v}: raised minimum version in " + ", ".join(updated))
+        else:
+            print(f"::warning::PHP {v}: no SVRUnit test with the minimum version {package(old)} found")
 
 
 def write_changelog(version, changes):
