@@ -37,6 +37,8 @@ API = "https://api.launchpad.net/1.0/~ondrej/+archive/ubuntu/php?ws.op=getPublis
 
 INSTALL_SCRIPT = "src/scripts/install_php.sh"
 LOCK_FILE = ".github/php-versions.json"
+# the released versions on Docker Hub, the new version is based on the highest one
+DOCKER_HUB_TAGS = "https://hub.docker.com/v2/repositories/dockware/shopware-essentials/tags?page_size=100"
 CHANGELOG = "CHANGELOG.md"
 SVRUNIT_TESTS = "tests/svrunit/**/*.yml"
 
@@ -127,7 +129,13 @@ def main():
         output(release="false")
         return
 
-    version = next_version()
+    try:
+        version = next_version()
+    except OSError as e:
+        # without docker hub we can't be sure about the next version: no release, the next run tries again
+        print(f"::warning::docker hub not reachable, skipping this run: {e}")
+        output(release="false")
+        return
     print(f"New release {version}")
     if not args.dry_run:
         write_changelog(version, changes)
@@ -179,12 +187,29 @@ def write_svrunit_tests(changes):
             print(f"::warning::PHP {v}: no SVRUnit test with version {package(old)} / {upstream(old)} found")
 
 
+def semver(text):
+    return tuple(int(x) for x in text.split("."))
+
+
 def next_version():
+    # highest version of CHANGELOG.md and Docker Hub, so a version that was released
+    # without a changelog entry is never released again (or overwritten as "latest")
     with open(CHANGELOG) as f:
-        m = re.search(r"^## \[(\d+)\.(\d+)\.(\d+)\]", f.read(), re.M)
+        m = re.search(r"^## \[(\d+\.\d+\.\d+)\]", f.read(), re.M)
     if not m:
         sys.exit(f"no '## [x.y.z]' release found in {CHANGELOG}")
-    major, minor, patch = map(int, m.groups())
+    versions = [m.group(1)]
+
+    url = DOCKER_HUB_TAGS
+    while url:
+        data = json.load(urllib.request.urlopen(url, timeout=30))
+        versions += [t["name"] for t in data["results"] if re.fullmatch(r"\d+\.\d+\.\d+", t["name"])]
+        url = data.get("next")
+
+    highest = max(versions, key=semver)
+    if highest != m.group(1):
+        print(f"{CHANGELOG} ends at {m.group(1)}, but {highest} is already released on Docker Hub")
+    major, minor, patch = semver(highest)
     return f"{major}.{minor}.{patch + 1}"
 
 
