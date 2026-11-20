@@ -1,0 +1,137 @@
+name: PHP Watcher
+run-name: Check packages.sury.org for new PHP versions
+
+# =====================================================================================================
+# PHP WATCHER
+# =====================================================================================================
+#
+# WHY
+#   dockware/shopware-essentials and dockware/shopware ship PHP 8.2 - 8.5 (6.5 images also 8.1) from the
+#   PHP repository packages.sury.org (Ondrej Sury). When a PHP security fix comes out, our images stay vulnerable until somebody builds
+#   and releases them by hand. This workflow does that automatically, at most one hour after the fix
+#   is available for all architectures.
+#
+# WHAT (every hour at :17, or manually via "Run workflow")
+#   1. tests/scripts/php_watch.py compares the php-fpm package versions packages.sury.org publishes for noble with
+#      the versions of our last release (.github/php-versions.json).
+#      A change is either a new PHP release (8.4.27 -> 8.4.28) or a new package revision
+#      (8.4.27-1 -> 8.4.27-2). Revisions matter: that is how Ondrej backports security fixes,
+#      so both trigger a release.
+#   2. if something changed, the script
+#        - takes the highest shopware-essentials version of CHANGELOG.md and Docker Hub and bumps the patch
+#          (1.5.0 -> 1.5.1). Docker Hub is included, because versions were released without a changelog entry,
+#        - adds a CHANGELOG.md entry,
+#        - raises the PHP versions in the existing SVRUnit tests (tests/svrunit/tests/php/security/php-patched.yml)
+#          to the new package version,
+#        - updates .github/php-versions.json.
+#   3. this workflow commits these files to main.
+#   4. it releases shopware-essentials:<new version> as latest.
+#   5. it rebuilds every Shopware image that is "latest" or "<major>-latest" on Docker Hub, with the same tags
+#      (tests/scripts/php_watch_targets.py). Docker Hub is the source of truth, so exactly the images people
+#      pull are rebuilt, from main (CURRENT_SW_VERSION) or from lts/sw-<version>. A version bump on main that
+#      is not released yet is never published by the watcher. Majors in SKIP_MAJORS are left out.
+#   CircleCI builds amd64 + arm64 for every image, runs SVRUnit and only then pushes to Docker Hub.
+#
+# SAFETY
+#   - outdated mirror: apt mirrors can still deliver the old PHP package for a while. Because the SVRUnit
+#     tests were raised in step 2, such a build fails in CircleCI and nothing is pushed.
+#     LTS branches keep their own (older) tests, the watcher only commits to main.
+#   - amd64/arm64 out of sync: the repository sometimes gets arm64 hours after amd64. As long as the
+#     versions differ, nothing happens, the next run tries again.
+#   - packages.sury.org or Docker Hub not reachable: the run is skipped with a warning, the next run tries again.
+#   - concurrency: two watcher runs never run at the same time, so a version is never released twice.
+#   - a failed CircleCI build is NOT retried automatically. Version and changelog are already on main,
+#     so start the release workflows with the same version again once the cause is fixed.
+#
+# SETUP
+#   - secret CIRCLE_CI_TOKEN (already used by the release workflows)
+#   - write access to main: either "Read and write permissions" for workflows, or, if main is protected,
+#     a token with push rights in the secret PHP_WATCHER_TOKEN.
+#
+# Local check without changing anything: python3 tests/scripts/php_watch.py --dry-run
+#                                        python3 tests/scripts/php_watch_targets.py
+# =====================================================================================================
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "17 * * * *"
+
+env:
+  # Shopware majors that are NOT rebuilt, even if they have a <major>-latest tag (space separated, e.g. "6.5").
+  # 6.6 and 6.5 are left out for now: their LTS branches still install PHP from the Launchpad PPA, which gets
+  # no new PHP versions for noble anymore. Remove them here once their branches use packages.sury.org.
+  SKIP_MAJORS: "6.6 6.5"
+
+# never run two watchers at once, otherwise both could release the same version
+concurrency:
+  group: php-watcher
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+
+  watch:
+    name: Check PHP Versions
+    runs-on: ubuntu-latest
+    steps:
+
+      - name: Clone Code
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          # if main is protected, use a token that may push to it (e.g. a PAT in this secret)
+          token: ${{ secrets.PHP_WATCHER_TOKEN || github.token }}
+
+      # compares packages.sury.org with .github/php-versions.json and prepares the release files.
+      # outputs: release=true + version=x.y.z, or bootstrap=true if php-versions.json did not exist yet
+      - name: Check PHP repository
+        id: watch
+        run: |
+          python3 tests/scripts/php_watch.py
+
+      # version, changelog, SVRUnit tests and php-versions.json go to main BEFORE the build starts,
+      # because CircleCI builds main and has to run the raised SVRUnit tests
+      - name: Commit Release
+        if: steps.watch.outputs.release == 'true' || steps.watch.outputs.bootstrap == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add CHANGELOG.md .github/php-versions.json tests/svrunit
+          if [ "${{ steps.watch.outputs.release }}" = "true" ]; then
+            git commit -m "Release essentials ${{ steps.watch.outputs.version }} with new PHP versions"
+          else
+            git commit -m "Add PHP versions lock file for the PHP watcher"
+          fi
+          git push origin HEAD:main
+
+      # new essentials version with the new PHP packages, becomes "latest"
+      - name: Release Essentials ${{ steps.watch.outputs.version }}
+        if: steps.watch.outputs.release == 'true'
+        uses: ./.github/actions/circleci
+        with:
+          BRANCH: main
+          IMAGE: shopware-essentials
+          VERSION: ${{ steps.watch.outputs.version }}
+          IS_LATEST: true
+          IS_MAJOR_LATEST: false
+          # -------------------------------------------
+          CIRCLECI_KEY: ${{ secrets.CIRCLE_CI_TOKEN }}
+
+      # same Shopware versions and tags as live on Docker Hub (latest / <major>-latest), only rebuilt
+      # with the new PHP packages. php_watch_targets.py prints which branch builds which tag.
+      - name: Rebuild Shopware Images
+        if: steps.watch.outputs.release == 'true'
+        env:
+          CIRCLECI_KEY: ${{ secrets.CIRCLE_CI_TOKEN }}
+        run: |
+          set -e
+          # one line per image: <branch> <version> <setLatest> <setMajorLatest>
+          python3 tests/scripts/php_watch_targets.py > targets.txt
+          cat targets.txt
+          while read -r BRANCH VERSION IS_LATEST IS_MAJOR_LATEST; do
+            echo "Release shopware:$VERSION from $BRANCH (latest=$IS_LATEST, major-latest=$IS_MAJOR_LATEST)"
+            (cd .circleci && sh run-img.sh "$BRANCH" "$CIRCLECI_KEY" shopware "$VERSION" "$IS_LATEST" "$IS_MAJOR_LATEST")
+          done < targets.txt
