@@ -1,6 +1,6 @@
 {
   "name": "dockware/flex",
   "require-dev": {
-    "svrunit/svrunit": "dev-main"
+    "svrunit/svrunit": "1.9.0"
   }
 }
