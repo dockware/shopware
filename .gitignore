@@ -12,3 +12,7 @@
 /.idea/flex.iml
 /.idea
 graft
+
+# >>> sightdeck: agent files of a project stored on this computer (managed, do not edit)
+/.agents/sightdeck/
+# <<< sightdeck

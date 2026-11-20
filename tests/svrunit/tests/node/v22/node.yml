@@ -5,3 +5,6 @@ commands:
   - name: "NODE Version 22 as SUDO user"
     command: "sudo node -v"
     not_expected: "command not found" # sudo version switch does not always work, but it needs to be at least found!!!
+  - name: "NODE version is >= 22.23.4 (security release 2026-10-20)"
+    command: "node -e \"const [a,b,c]=process.versions.node.split('.').map(Number);console.log(a*1e6+b*1e3+c >= 22023004 ? 'PATCHED' : 'VULNERABLE')\""
+    expected: "PATCHED"

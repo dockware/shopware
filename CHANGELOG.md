@@ -8,11 +8,18 @@ Because this is the foundation of the Shopware environment, we will always relea
 changes in the operating system or packages. New Shopware versions, built with this version, will then automatically
 contain these changes.
 
-## [1.4.1]
+## [1.5.1]
 
 ### Security
 
 - Updated PHP to 8.2.36, 8.3.37, 8.4.28 and 8.5.13, including the security fixes released on 2026-11-19.
+
+## [1.5.0]
+
+### Security
+
+- Updated PHP to 8.2.35, 8.3.36, 8.4.27 and 8.5.12 to fix CVE-2026-109618 and CVE-2026-109619.
+- Updated Node.js to 22.23.4 and 24.22.1 to include the Node.js security release from 2026-10-20.
 
 ## [1.4.0]
 
